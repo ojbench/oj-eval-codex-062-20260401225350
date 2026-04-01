@@ -9,9 +9,6 @@ using std::fstream;
 using std::ifstream;
 using std::ofstream;
 
-// A simple file-backed storage without space reclamation.
-// Stores a fixed-size T in binary and reserves 'info_len' ints as header.
-
 template<class T, int info_len = 2>
 class MemoryRiver {
 private:
@@ -22,10 +19,10 @@ private:
 public:
     MemoryRiver() = default;
 
-    explicit MemoryRiver(const string& file_name) : file_name(file_name) {}
+    explicit MemoryRiver(const string& fn) : file_name(fn) {}
 
-    void initialise(string FN = ) {
-        if (FN != ) file_name = FN;
+    void initialise(string FN = string()) {
+        if (!FN.empty()) file_name = FN;
         file.open(file_name, std::ios::out | std::ios::binary | std::ios::trunc);
         int tmp = 0;
         for (int i = 0; i < info_len; ++i)
@@ -33,7 +30,6 @@ public:
         file.close();
     }
 
-    // Read the nth (1-based) int from the header into tmp
     void get_info(int &tmp, int n) {
         if (n > info_len || n <= 0) return;
         file.open(file_name, std::ios::in | std::ios::binary);
@@ -42,7 +38,6 @@ public:
         file.close();
     }
 
-    // Write tmp into the nth (1-based) int in the header
     void write_info(int tmp, int n) {
         if (n > info_len || n <= 0) return;
         file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
@@ -51,11 +46,9 @@ public:
         file.close();
     }
 
-    // Append object t to the end of file and return the starting byte index
     int write(T &t) {
         file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
         if (!file) {
-            // If file does not exist yet, create and initialize header
             initialise(file_name);
             file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
         }
@@ -66,7 +59,6 @@ public:
         return static_cast<int>(pos);
     }
 
-    // Overwrite the object at the given byte index with t
     void update(T &t, const int index) {
         file.open(file_name, std::ios::in | std::ios::out | std::ios::binary);
         file.seekp(static_cast<std::streamoff>(index), std::ios::beg);
@@ -74,7 +66,6 @@ public:
         file.close();
     }
 
-    // Read the object at the given byte index into t
     void read(T &t, const int index) {
         file.open(file_name, std::ios::in | std::ios::binary);
         file.seekg(static_cast<std::streamoff>(index), std::ios::beg);
@@ -82,9 +73,8 @@ public:
         file.close();
     }
 
-    // No space reclamation required in easy version
-    void Delete(int /*index*/) {
-        // Intentionally left blank
+    void Delete(int) {
+        // no-op for easy version
     }
 };
 
